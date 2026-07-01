@@ -1,10 +1,32 @@
 import luaparse from "luaparse";
 
-export default function handler(req, res) {
-    const script = req.body.script || "";
-    let issues = [];
+export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Only POST allowed" });
+    }
+
+    // Read raw body (Vercel does NOT parse JSON automatically)
+    let rawBody = "";
+    await new Promise(resolve => {
+        req.on("data", chunk => rawBody += chunk);
+        req.on("end", resolve);
+    });
+
+    let json;
+    try {
+        json = JSON.parse(rawBody);
+    } catch (err) {
+        return res.status(400).json({ error: "Invalid JSON body" });
+    }
+
+    const script = json.script;
+    if (!script || typeof script !== "string") {
+        return res.status(400).json({ error: "Missing 'script' field" });
+    }
 
     let ast;
+    let issues = [];
+
     try {
         ast = luaparse.parse(script, {
             locations: true,
@@ -54,7 +76,7 @@ export default function handler(req, res) {
 
     checkNode(ast);
 
-    res.status(200).json({
+    return res.status(200).json({
         allowed: issues.length === 0,
         issues
     });
