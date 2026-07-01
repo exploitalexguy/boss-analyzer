@@ -1,0 +1,8 @@
+{
+  "name": "boss-analyzer",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "luaparse": "^0.3.1"
+  }
+}
